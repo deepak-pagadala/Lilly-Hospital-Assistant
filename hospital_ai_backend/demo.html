@@ -1,0 +1,105 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Hospital Voice Assistant Demo</title>
+  <style>
+    body { font-family: sans-serif; max-width: 600px; margin: 40px auto; background: #f9f9f9; }
+    button { font-size: 18px; padding: 10px 24px; }
+    #recording { color: red; font-weight: bold; margin-left: 8px; }
+    #audio { margin-top: 16px; }
+    .bubble { padding: 10px 16px; border-radius: 20px; margin: 8px 0; max-width: 80%; }
+    .user { background: #d0ebff; text-align: right; float: right; clear: both;}
+    .assistant { background: #ffe7b2; text-align: left; float: left; clear: both;}
+  </style>
+</head>
+<body>
+  <h1>🏥 Hospital Voice Assistant</h1>
+  <button id="record">🎤 Record</button>
+  <span id="recording" style="display:none;">● Recording...</span>
+  <br><br>
+  <div id="chat"></div>
+  <audio id="audio" controls style="display:none;"></audio>
+
+  <script>
+    const API_BASE = "http://localhost:8000";
+    let mediaRecorder, audioChunks = [];
+    let conversation = [];
+    const recordBtn = document.getElementById('record');
+    const audioElem = document.getElementById('audio');
+    const recordingDot = document.getElementById('recording');
+    const chatDiv = document.getElementById('chat');
+
+    function addBubble(role, text) {
+      let div = document.createElement('div');
+      div.className = 'bubble ' + (role === 'user' ? 'user' : 'assistant');
+      div.textContent = text;
+      chatDiv.appendChild(div);
+      chatDiv.scrollTop = chatDiv.scrollHeight;
+    }
+
+    recordBtn.onclick = async function () {
+      if (!mediaRecorder || mediaRecorder.state === "inactive") {
+        // Start recording
+        navigator.mediaDevices.getUserMedia({ audio: true }).then(stream => {
+          mediaRecorder = new MediaRecorder(stream);
+          audioChunks = [];
+          mediaRecorder.ondataavailable = e => audioChunks.push(e.data);
+          mediaRecorder.onstop = async () => {
+            recordingDot.style.display = 'none';
+            recordBtn.textContent = "🎤 Record";
+            const audioBlob = new Blob(audioChunks, { type: 'audio/webm' });
+            // Send to /stt
+            addBubble("user", "(processing speech...)");
+            const formData = new FormData();
+            formData.append('audio', audioBlob, 'recording.webm');
+            let sttResp = await fetch(API_BASE + '/stt', { method: 'POST', body: formData });
+            let sttData = await sttResp.json();
+            if (sttData.error) {
+              alert("STT Error: " + sttData.error);
+              return;
+            }
+            let userText = sttData.text;
+            // Show what was said
+            chatDiv.lastChild.textContent = userText;
+            conversation.push({ role: "user", content: userText });
+            // Send to /chat
+            addBubble("assistant", "(AI thinking...)");
+            let chatResp = await fetch(API_BASE + '/chat', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ messages: conversation })
+            });
+            let chatData = await chatResp.json();
+            if (chatData.error) {
+              alert("Chat Error: " + chatData.error);
+              chatDiv.lastChild.textContent = "Sorry, there was a problem.";
+              return;
+            }
+            let aiText = chatData.reply;
+            chatDiv.lastChild.textContent = aiText;
+            conversation.push({ role: "assistant", content: aiText });
+            // TTS
+            let ttsResp = await fetch(`${API_BASE}/tts?text=${encodeURIComponent(aiText)}&voice=nova`);
+            if (!ttsResp.ok) {
+              alert("TTS Error: " + ttsResp.statusText);
+              return;
+            }
+            let audioBlobTTS = await ttsResp.blob();
+            let audioURL = URL.createObjectURL(audioBlobTTS);
+            audioElem.src = audioURL;
+            audioElem.style.display = '';
+            audioElem.play();
+          };
+          mediaRecorder.start();
+          recordingDot.style.display = '';
+          recordBtn.textContent = "■ Stop";
+        }).catch(err => {
+          alert("Microphone permission denied or not available.");
+        });
+      } else if (mediaRecorder.state === "recording") {
+        mediaRecorder.stop();
+      }
+    };
+  </script>
+</body>
+</html>
