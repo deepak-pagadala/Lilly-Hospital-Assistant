@@ -66,7 +66,7 @@ All routes are documented at /docs (OpenAPI).
 ---
 ## 🛠️ Setup
 
-- git clone https://github.com/your-org/hospital-voice-assistant.git
+- git clone https://github.com/deepak-pagadala/Lilly-Hospital-Assistant.git
 - cd hospital-voice-assistant
 - python -m venv env
 - source env/bin/activate
