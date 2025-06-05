@@ -38,7 +38,7 @@ Patient → Twilio <Stream> → FastAPI WebSocket /media-stream
 ```
 
 ---
-LLM Agent Behavior
+## LLM Agent Behavior
 
 LLM agent logic is fully dynamic and declarative:
 
@@ -48,13 +48,13 @@ After function output, LLM wraps it in natural dialog ("You’re booked with Dr.
 No conditional if/else logic needed.
 
 ---
-Architecture
+## Architecture
 ![voice_flow_clean](https://github.com/user-attachments/assets/ba63dd0c-0b6c-4060-95ec-86575decef73)
 
 
 
 ---
-📡 REST API for Admin Use
+## 📡 REST API for Admin Use
 
 1. Method	Endpoint	Description
 2. GET	/doctors	List doctors by specialty
@@ -64,7 +64,7 @@ Architecture
 All routes are documented at /docs (OpenAPI).
 
 ---
-🛠️ Setup
+## 🛠️ Setup
 
 - git clone https://github.com/your-org/hospital-voice-assistant.git
 - cd hospital-voice-assistant
@@ -78,7 +78,7 @@ All routes are documented at /docs (OpenAPI).
 
 
 ---
-🧠 Tech Stack
+## 🧠 Tech Stack
 1. FastAPI – backend API + WebSocket engine
 2. Twilio – call streaming and audio playback
 3. OpenAI Whisper – speech-to-text
@@ -88,7 +88,7 @@ All routes are documented at /docs (OpenAPI).
 7. n8n – external automation via REST API
 
 ---
-🧭 Future Roadmap
+## 🧭 Future Roadmap
 
  1. User Authentication (JWT)
  2. Admin Dashboard (for CRUD and analytics)
@@ -97,7 +97,7 @@ All routes are documented at /docs (OpenAPI).
  5. Retry queue for failed audio responses
 
  ---
-💡 Example Use Cases
+## 💡 Example Use Cases
 
 Patient asks: “Do you have a cardiologist tomorrow afternoon?”
 
@@ -110,7 +110,7 @@ Responds with: “Yes! Dr. Samir is available at 2:30 and 3:00 PM. Would you lik
 
 
 ---
-Demo
+## Demo
 
 
 https://github.com/user-attachments/assets/60afc965-bea9-4ad6-abd8-eaee5160b7cb
