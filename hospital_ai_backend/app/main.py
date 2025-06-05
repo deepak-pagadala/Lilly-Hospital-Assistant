@@ -56,7 +56,7 @@ app.mount("/static", StaticFiles(directory="static"), name="static")
 # --- Conversation store for Twilio calls ---
 CONV_HISTORY = {}
 
-# --- Classic REST endpoints (for your admin/app frontend) ---
+# --- Classic REST endpoints ---
 @app.get("/doctors", response_model=list[schemas.DoctorBase])
 def read_doctors(skip: int = 0, limit: int = 10, db: Session = Depends(get_db)):
     log(f"/doctors called: skip={skip}, limit={limit}")
@@ -119,14 +119,13 @@ async def handle_incoming_call(request: Request):
     response = VoiceResponse()
     response.say("Connecting you, please stay on line.")
     connect = Connect()
-    # Ensure no double protocol!
     ws_url = f"wss://bdd2-2600-1702-7d20-1790-7569-cb79-4e79-22eb.ngrok-free.app/media-stream"
     connect.stream(url=ws_url)
     response.append(connect)
     log(f"Twilio incoming-call: returned TwiML with stream to {ws_url}")
     return Response(content=str(response), media_type="application/xml")
 
-# --- The main Twilio <Stream> media stream endpoint: all real-time AI + DB happens here ---
+# --- Twilio <Stream> media stream endpoint ---
 @app.websocket("/media-stream")
 async def media_stream(websocket: WebSocket):
     await websocket.accept()
@@ -327,19 +326,19 @@ async def media_stream(websocket: WebSocket):
                 if response.get("type") == "response.audio.delta" and "delta" in response:
                     stream_sid = stream_sid_holder["sid"]
                     if stream_sid:
-                            # 1️⃣ use the delta exactly as-is
+        
                         audio_payload = response["delta"]
                         await asyncio.gather(*[
                             client.send_json({"type": "ai-speaking"}) for client in app.state.visualizer_clients
                         ])
 
-                            # 2️⃣ tell Twilio this is an outbound track
+
                         await websocket.send_json({
                             "event": "media",
                             "streamSid": stream_sid,
                             "media": {
-                                "track": "outbound",          # <-- mandatory for return audio
-                                "payload": audio_payload      # <-- already base-64 μ-law
+                                "track": "outbound",      
+                                "payload": audio_payload     
                             }
                         })
                         await asyncio.sleep(0.5)
@@ -366,7 +365,6 @@ async def visualizer_ws(websocket: WebSocket):
         app.state.visualizer_clients.remove(websocket)
 
 
-# --- Classic /chat endpoint for frontend/testing ---
 @router.post("/chat")
 async def chat(request: ChatRequest, db: Session = Depends(get_db)):
     messages = [msg.dict(exclude_unset=True) for msg in request.messages]
@@ -377,7 +375,6 @@ async def chat(request: ChatRequest, db: Session = Depends(get_db)):
         }
         messages = [system_prompt] + messages
     FUNCTION_LIST = [
-        # (Same as above)
     ]
     client = openai.OpenAI(api_key=OPENAI_API_KEY)
     try:
@@ -394,8 +391,6 @@ async def chat(request: ChatRequest, db: Session = Depends(get_db)):
             fn = first_choice.message.function_call
             fn_name = fn.name
             fn_args = json.loads(fn.arguments)
-            # Handle like in /media-stream above (copy logic)
-            # Return function result
         return {"reply": first_choice.message.content}
     except Exception as e:
         log(f"/chat error: {e}")
