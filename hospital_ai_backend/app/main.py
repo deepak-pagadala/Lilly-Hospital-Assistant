@@ -28,7 +28,7 @@ def log(msg):
 load_dotenv()
 OPENAI_API_KEY = os.getenv("OPENAI_API_KEY")
 VOICE = "alloy"
-NGROK_BASE = "https://bdd2-2600-1702-7d20-1790-7569-cb79-4e79-22eb.ngrok-free.app"  # <-- Set your ngrok https URL here!
+NGROK_BASE = "https://bdd2-2600-1702-7d20-1790-7569-cb79-4e79-22eb.ngrok-free.app"  
 SYSTEM_MESSAGE = (
     "You are Rachel, a helpful, empathetic hospital assistant at Rock Hospitals. "
     "Use natural conversation, hesitations, and warmth. Help users with doctors, appointments, etc. "
